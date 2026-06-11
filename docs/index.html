@@ -52,6 +52,8 @@ mark {
 }
 .masthead a { text-decoration: none; }
 .masthead .tag { color: var(--color-vulcan-black-light); font-weight: 400; }
+.masthead .logo { display: flex; align-items: center; }
+.masthead .logo img { height: 20px; display: block; }
 
 /* ---------- hero ---------- */
 .hero { padding: clamp(3.5rem, 9vw, 7rem) var(--gutter) clamp(2.5rem, 6vw, 4.5rem); }
@@ -169,6 +171,17 @@ p + p { margin-top: 1em; }
   margin-top: .8rem; padding-left: 1rem; border-left: 2px solid var(--color-vulcan-yellow);
 }
 .chart-caption strong { color: var(--color-vulcan-black); font-family: var(--font-display); text-transform: uppercase; letter-spacing: .06em; font-size: .82rem; }
+.fig-notes {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.6rem;
+  margin-top: 1.6rem; max-width: 76rem;
+}
+.fig-notes > div { border-top: 1px solid rgba(26,26,26,.15); padding-top: .75rem; }
+.fig-notes .nl {
+  font-family: var(--font-display); font-weight: 600; font-size: .72rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--color-vulcan-black-light); display: block; margin-bottom: .4rem;
+}
+.fig-notes p { font-size: .88rem; line-height: 1.6; max-width: none; }
+.fig-notes p + p { margin-top: .6em; }
 
 /* quadrant table */
 table.quad { width: 100%; border-collapse: collapse; margin-top: 2.2rem; font-size: .95rem; }
@@ -240,23 +253,23 @@ footer .small { font-size: .82rem; color: var(--color-vulcan-black-light); margi
 <body>
 
 <header class="masthead">
-  <a href="https://github.com/VulcanLab">VulcanLab</a>
+  <a class="logo" href="https://github.com/VulcanLab"><img src="vulcan-logo.svg" alt="Vulcan Research"></a>
   <span class="tag">Preprint &amp; Open Dataset — June 2026</span>
   <a href="https://github.com/VulcanLab/genai-security-incidents">GitHub ↗</a>
 </header>
 
 <div class="hero">
-  <span class="eyebrow">AIFT · Preprint · 8 June 2026</span>
+  <span class="eyebrow">Vulcan Research AIFT · Preprint · 8 June 2026</span>
   <h1>Coverage Without Casualties<span class="q">?</span></h1>
   <p class="subtitle">An empirical test of the AI insurability frontier against recent incident evidence</p>
   <div class="byline">
     <span class="authors">Alex Leung · Rex Zhang · Kentaroh Toyoda · SiewMei Loh</span>
     <span class="meta">AIFT</span>
   </div>
-  <p class="companion-note">Companion paper to <em>“The Insurability Frontier of AI Risk”</em> (AIFT, 6 May 2026).</p>
+  <p class="companion-note">Companion paper to <a href="https://arxiv.org/abs/2605.18784"><em>“The Insurability Frontier of AI Risk”</em></a> (AIFT, 6 May 2026, arXiv:2605.18784).</p>
   <div class="cta-row">
-    <a class="btn btn-primary" href="https://github.com/VulcanLab/genai-security-incidents/raw/main/incidents_2024-2026.csv">Download dataset (CSV)</a>
-    <a class="btn btn-ghost" href="https://github.com/VulcanLab/genai-security-incidents/raw/main/Incident_Data_2024-2026.xlsx">Workbook (XLSX)</a>
+    <a class="btn btn-primary" href="https://github.com/VulcanLab/genai-security-incidents/raw/main/incidents_2024-2026.csv">Dataset (CSV)</a>
+    <a class="btn btn-ghost" href="https://github.com/VulcanLab/genai-security-incidents/raw/main/Incident_Data_2024-2026.xlsx">Dataset (XLSX)</a>
     <a class="btn btn-ghost" href="#cite">Cite</a>
   </div>
 </div>
@@ -314,21 +327,65 @@ footer .small { font-size: .82rem; color: var(--color-vulcan-black-light); margi
 
 <section id="charts">
   <div class="sec-head reveal"><span class="sec-num">03</span><h2>The evidence, interactively</h2></div>
-  <p class="reveal">All figures are computed live from the released dataset (<a href="https://github.com/VulcanLab/genai-security-incidents/blob/main/incidents_2024-2026.csv"><code>incidents_2024-2026.csv</code></a>) joined to the coverage matrix of the companion paper. Hover for per-threat detail.</p>
+  <p class="reveal">All figures are computed live from the <a href="https://github.com/VulcanLab/genai-security-incidents/blob/main/incidents_2024-2026.csv">released incident dataset</a> joined to the coverage matrix of the companion paper. Hover for per-threat detail.</p>
 
   <div class="chart-block reveal">
     <div id="chart-top18" class="chart"></div>
     <p class="chart-caption"><strong>Fig. 1</strong> — Top-18 threats by recent (2024–26) real-world incidence, colored by coverage–incidence quadrant. Deepfake fraud (T-35) leads; shadow AI (T-37) stands out: high incidence, no affirmative cover, active exclusions.</p>
+    <div class="fig-notes">
+      <div>
+        <span class="nl">What it measures</span>
+        <p>For each threat class, the number of publicly documented real-world incidents (2024–2026) whose record satisfies that threat's predicate — the top 18 of 55 shown here. An incident may map to more than one threat, so bars are prevalence per threat, not a partition of the corpus.</p>
+      </div>
+      <div>
+        <span class="nl">Why it matters</span>
+        <p>Observed incidence is highly skewed, and a positioning matrix contains no incidence information: this is where loss-generating events actually cluster. The identity of the leader is itself a finding — the dominant AI peril is a misuse and fraud event, not a model-internal failure.</p>
+        <p>The two code-execution rows (T-05, T-15) are the AI supply-side security tail: remote code execution in AI development tooling (GitHub Copilot, Claude Desktop, Cursor and similar), insurance-relevant under technology E&amp;O and cyber but distinct from user-facing AI harm.</p>
+      </div>
+      <div>
+        <span class="nl">Takeaway</span>
+        <p>Most of the tallest bars are yellow — high-incidence perils sitting in the exposure-gap quadrant. The user-facing AI-harm leaders are deepfake fraud (609), regulatory non-compliance (424), hallucination (132), prompt injection (116), and bias and fairness failures (107).</p>
+      </div>
+    </div>
   </div>
 
   <div class="chart-block reveal">
     <div id="chart-frontier" class="chart" style="min-height: 560px;"></div>
     <p class="chart-caption"><strong>Fig. 2</strong> — The coverage–incidence frontier: observed real-world incidence (log scale) against affirmative coverage breadth, split at the medians (incidence = 5, affirmative cells = 5; a threat lying exactly at a median falls in the lower group). The lower-right is the exposure-gap zone: frequent but thinly covered. The upper-left is anticipatory cover: broadly covered but rarely observed.</p>
+    <div class="fig-notes">
+      <div>
+        <span class="nl">What it measures</span>
+        <p>Each of the 55 threats on two axes at once: how often it is observed (realized incidents, log scale) and how broadly the market affirmatively covers it (count of “A” cells across the 26 products and exclusion regimes of the companion matrix). Dashed lines mark the medians of both distributions.</p>
+      </div>
+      <div>
+        <span class="nl">Why it matters</span>
+        <p>This is the paper's central test: if the market is sorting risk by peril, is it sorting on the perils that actually occur? A coverage map shows where the market <em>says</em> risk sits; an incidence map shows where events <em>actually</em> cluster. How far the two diverge is the finding.</p>
+      </div>
+      <div>
+        <span class="nl">Takeaway</span>
+        <p>Position on one axis tells us little about position on the other — the AI-insurance market is not yet an incidence-driven market. Model drift (T-29, top-left) is the purest anticipatory case: zero recorded incidents, seven affirmative cells. Shadow AI (T-37, bottom-right) is the mirror image: 28 incidents, 75% critical-or-high severity, no affirmative cover and two exclusions.</p>
+        <p>One caveat: several high-incidence perils sit exactly at five affirmative cells, a boundary case — and they may carry silent coverage under standard professional-indemnity wordings that an affirmative cell count does not capture.</p>
+      </div>
+    </div>
   </div>
 
   <div class="chart-block reveal">
     <div id="chart-maturity" class="chart" style="min-height: 540px;"></div>
     <p class="chart-caption"><strong>Fig. 3</strong> — Evidence maturity by threat (2024–2026): realized real-world incidents, research/red-team demonstrations, and disclosed attack surface, stacked. Streams are distinct evidence modalities and are not summed into a single frequency. Of the 55 threats, 42 are Realized, 3 Demonstrated, 2 Surfacing, and 8 Theoretical.</p>
+    <div class="fig-notes">
+      <div>
+        <span class="nl">What it measures</span>
+        <p>Three kinds of evidence per threat, kept distinct: <em>realized</em> field incidents (black), <em>demonstrated</em> feasibility from research and red-team work (dark yellow), and <em>surfacing</em> attack surface from vulnerability disclosures (yellow). Each threat is classified by the strongest evidence available; a fourth class, <em>theoretical</em>, has no evidence in any stream.</p>
+      </div>
+      <div>
+        <span class="nl">Why it matters</span>
+        <p>The composition explains the anticipatory quadrant of Fig. 2: perils that are broadly covered yet rarely realized often carry substantial demonstrated evidence — RAG poisoning shows 11 demonstrations against 3 field incidents, membership inference 3 demonstrations and none. Anticipatory cover is tracking feasibility established in the literature, not pricing perils with no basis.</p>
+      </div>
+      <div>
+        <span class="nl">Takeaway</span>
+        <p>The disclosure stream reveals a forming attack surface ahead of losses: MCP server compromise has 18 realized incidents but 123 disclosed vulnerabilities; unauthorized MCP exposure shows 47 disclosures against 5 field incidents. These surfacing-heavy perils — where attack surface accumulates faster than realized losses — are the leading edge an underwriter would watch.</p>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -361,11 +418,11 @@ footer .small { font-size: .82rem; color: var(--color-vulcan-black-light); margi
   <p class="reveal">Incident-level records underlying the paper: publicly disclosed GenAI / agentic-AI security incidents, vulnerabilities, and red-team findings, tagged against common AI-security taxonomies (OWASP LLM Top 10, OWASP ASI, MITRE ATLAS, NIST AI RMF) and crosswalked to the threat IDs of the <em>Insurability Frontier</em> companion paper. <strong>4,328 records · 2024–2026 · data cutoff 17 May 2026.</strong> A subset of <a href="https://doi.org/10.5281/zenodo.20248676">GenAI &amp; Agentic AI Security Incidents (Zenodo v2.0.0)</a>.</p>
   <div class="files">
     <a class="file-card reveal" href="https://github.com/VulcanLab/genai-security-incidents/raw/main/incidents_2024-2026.csv">
-      <div class="fname">incidents_2024-2026.csv</div>
+      <div class="fname">Dataset (CSV)</div>
       <div class="fdesc">CLI-friendly export (UTF-8, RFC-4180 quoted). 20 columns incl. stream, severity, CVSS, taxonomy tags, and the T-01…T-55 threat crosswalk.</div>
     </a>
     <a class="file-card reveal" href="https://github.com/VulcanLab/genai-security-incidents/raw/main/Incident_Data_2024-2026.xlsx">
-      <div class="fname">Incident_Data_2024-2026.xlsx</div>
+      <div class="fname">Dataset (XLSX)</div>
       <div class="fdesc">Canonical workbook with an embedded Readme sheet plus the Incidents 2024–2026 data sheet.</div>
     </a>
     <a class="file-card reveal" href="https://github.com/VulcanLab/genai-security-incidents#data-dictionary">
@@ -390,18 +447,26 @@ footer .small { font-size: .82rem; color: var(--color-vulcan-black-light); margi
     <p>A. Leung, R. Zhang, K. Toyoda, and S. Loh, “Coverage Without Casualties? An Empirical Test of the AI Insurability Frontier Against Recent Incident Evidence,” AIFT, June 8, 2026. Companion paper to “The Insurability Frontier of AI Risk” (AIFT, May 6, 2026).</p>
   </div>
   <div class="cite-block reveal">
+    <span class="cite-label">Companion paper</span>
+    <p>A. Leung, R. Zhang, E. Ling, K. Toyoda, and S. Loh, “The Insurability Frontier of AI Risk: Mapping Threats to Affirmative Coverage, Silent Exposures, and Exclusions,” AIFT, May 6, 2026. arXiv:<a href="https://arxiv.org/abs/2605.18784">2605.18784</a>.</p>
+  </div>
+  <div class="cite-block reveal">
     <span class="cite-label">Dataset</span>
     <p>E. Guilherme Jr., “GenAI &amp; Agentic AI Security Incidents,” version 2.0.0, dataset, Zenodo, 17 May 2026, doi:<a href="https://doi.org/10.5281/zenodo.20248676">10.5281/zenodo.20248676</a>. 2024–2026 threat-tagged subset released at <a href="https://github.com/VulcanLab/genai-security-incidents">github.com/VulcanLab/genai-security-incidents</a>.</p>
   </div>
   <p class="reveal" style="margin-top: 1.6rem;">Data released under <a href="https://creativecommons.org/licenses/by/4.0/">CC&nbsp;BY&nbsp;4.0</a>, matching the upstream Zenodo dataset.</p>
 </section>
 
+<section id="caveat">
+  <div class="sec-head reveal"><span class="sec-num">07</span><h2>Caveat</h2></div>
+  <p class="reveal">This is a preprint. Coverage cells reflect a public-positioning snapshot as of 17 May 2026, not executed policy wording or claim outcomes. Incident counts ground threat prevalence and severity, not claim frequency or loss cost.</p>
+</section>
+
 <footer>
   <div class="ft">
-    <span style="font-weight: 600; text-transform: uppercase;">VulcanLab · AIFT</span>
+    <span style="font-weight: 600; text-transform: uppercase;">Vulcan Research · AIFT</span>
     <span><a href="https://github.com/VulcanLab/genai-security-incidents">Repository</a> · <a href="https://doi.org/10.5281/zenodo.20248676">Upstream dataset</a> · <a href="#abstract">Top</a></span>
   </div>
-  <p class="small">This is a preprint. Coverage cells reflect a public-positioning snapshot as of 17 May 2026, not executed policy wording or claim outcomes. Incident counts ground threat prevalence and severity, not claim frequency or loss cost.</p>
 </footer>
 
 <script>
