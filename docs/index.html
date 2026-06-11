@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coverage Without Casualties? — An Empirical Test of the AI Insurability Frontier</title>
+<meta name="description" content="Joining a 55-threat AI insurability matrix to 3,054 real-world AI incidents (2024–2026). Affirmative AI insurance coverage does not track observed incidence. Interactive charts and open dataset.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-3.1.1.min.js" integrity="sha384-eyWfwv4NWkH7sLjk6s+Al2SBmZhX8gcLellpr+PLrfiNaHoTlAQTG9zDi4Z0liz8" crossorigin="anonymous" charset="utf-8"></script>
+<style>
+:root {
+  --color-vulcan-yellow: rgb(255, 202, 58);
+  --color-vulcan-yellow-light: rgb(255, 221, 47);
+  --color-vulcan-yellow-dark: rgb(255, 170, 43);
+  --color-vulcan-black: rgb(26, 26, 26);
+  --color-vulcan-black-light: rgb(77, 77, 77);
+  --color-vulcan-white: rgb(255, 255, 255);
+  --font-display: 'Roboto Condensed', 'Inter', 'Noto Sans TC', 'Noto Sans CJK', sans-serif;
+  --font-body: 'Inter', 'Roboto Condensed', 'Noto Sans TC', 'Noto Sans CJK', sans-serif;
+  --measure: 72ch;
+  --gutter: clamp(1.25rem, 4vw, 3.5rem);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--color-vulcan-black);
+  background: var(--color-vulcan-white);
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: var(--color-vulcan-yellow); color: var(--color-vulcan-black); }
+
+a { color: var(--color-vulcan-black); text-decoration-color: var(--color-vulcan-yellow-dark); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { background: var(--color-vulcan-yellow); text-decoration: none; }
+
+mark {
+  background: linear-gradient(transparent 55%, var(--color-vulcan-yellow) 55%);
+  padding: 0 .1em;
+}
+
+/* ---------- masthead ---------- */
+.masthead {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  padding: .8rem var(--gutter);
+  border-bottom: 1px solid rgba(26,26,26,.15);
+  font-family: var(--font-display);
+  font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600;
+}
+.masthead a { text-decoration: none; }
+.masthead .tag { color: var(--color-vulcan-black-light); font-weight: 400; }
+
+/* ---------- hero ---------- */
+.hero { padding: clamp(3.5rem, 9vw, 7rem) var(--gutter) clamp(2.5rem, 6vw, 4.5rem); }
+.eyebrow {
+  font-family: var(--font-display); font-weight: 600; font-size: .8rem;
+  letter-spacing: .18em; text-transform: uppercase;
+  display: inline-block; color: var(--color-vulcan-black-light);
+  border-bottom: 2px solid var(--color-vulcan-yellow);
+  padding-bottom: .35em; margin-bottom: 2rem;
+}
+h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.4rem, 6vw, 4.6rem);
+  line-height: 1.04;
+  letter-spacing: -.01em;
+  max-width: 16em;
+}
+h1 .q { color: var(--color-vulcan-yellow-dark); }
+.subtitle {
+  font-family: var(--font-display); font-weight: 400; font-style: italic;
+  font-size: clamp(1.05rem, 2.2vw, 1.45rem); line-height: 1.35;
+  max-width: 38em; margin-top: 1.25rem; color: var(--color-vulcan-black-light);
+}
+.byline {
+  margin-top: 2.25rem; display: flex; flex-wrap: wrap; gap: 2.5rem; align-items: baseline;
+  font-family: var(--font-display);
+}
+.byline .authors { font-size: 1.05rem; font-weight: 700; }
+.byline .meta { font-size: .9rem; color: var(--color-vulcan-black-light); letter-spacing: .05em; text-transform: uppercase; }
+.companion-note {
+  margin-top: 1rem; font-size: .92rem; color: var(--color-vulcan-black-light);
+}
+.cta-row { margin-top: 2.5rem; display: flex; flex-wrap: wrap; gap: .8rem; }
+.btn {
+  font-family: var(--font-display); font-weight: 600; font-size: .88rem;
+  letter-spacing: .06em; text-transform: uppercase;
+  padding: .7em 1.3em; border: 1px solid var(--color-vulcan-black);
+  text-decoration: none; transition: background .15s ease, border-color .15s ease;
+  display: inline-block;
+}
+.btn-primary { border-bottom: 3px solid var(--color-vulcan-yellow); }
+.btn-primary:hover { background: var(--color-vulcan-yellow); }
+.btn-ghost { border-color: rgba(26,26,26,.35); }
+.btn-ghost:hover { background: rgba(255,202,58,.18); border-color: var(--color-vulcan-black); }
+
+/* ---------- stat strip ---------- */
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  border-top: 1px solid rgba(26,26,26,.15);
+  border-bottom: 1px solid rgba(26,26,26,.15);
+}
+.stat {
+  padding: 1.8rem var(--gutter) 1.7rem 1.8rem;
+  border-right: 1px solid rgba(26,26,26,.15);
+}
+.stat:last-child { border-right: none; }
+.stat .n {
+  font-family: var(--font-display); font-weight: 700; font-size: clamp(1.9rem, 3.6vw, 2.7rem);
+  line-height: 1; letter-spacing: -.01em;
+}
+.stat .l {
+  font-family: var(--font-display); font-size: .78rem; font-weight: 500; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--color-vulcan-black-light); margin-top: .55rem;
+}
+@media (max-width: 720px) { .stat { border-right: none; border-bottom: 1px solid rgba(26,26,26,.15); } .stat:last-child { border-bottom: none; } }
+
+/* ---------- sections ---------- */
+section { padding: clamp(3rem, 7vw, 5.5rem) var(--gutter); }
+section + section { border-top: 1px solid rgba(26,26,26,.15); }
+.sec-head { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 2.2rem; }
+.sec-num {
+  font-family: var(--font-display); font-weight: 600; font-size: .85rem;
+  color: var(--color-vulcan-black-light);
+}
+h2 {
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
+  font-size: clamp(1.25rem, 2.6vw, 1.7rem); letter-spacing: .05em; line-height: 1.1;
+}
+h3 { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; text-transform: uppercase; letter-spacing: .05em; margin: 2rem 0 .8rem; }
+p { max-width: var(--measure); }
+p + p { margin-top: 1em; }
+.lede { font-size: 1.12rem; }
+
+/* abstract */
+.abstract { border-left: 2px solid var(--color-vulcan-yellow); padding-left: clamp(1rem, 3vw, 2rem); }
+.abstract p { color: var(--color-vulcan-black); }
+.keywords { margin-top: 1.4rem; font-size: .88rem; color: var(--color-vulcan-black-light); max-width: var(--measure); }
+
+/* findings cards */
+.contrast {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem;
+  margin: 2.4rem 0 0;
+}
+.card { border: 1px solid rgba(26,26,26,.2); padding: 1.6rem 1.6rem 1.4rem; position: relative; }
+.card.flag::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--color-vulcan-yellow);
+}
+.card .tid {
+  font-family: var(--font-display); font-weight: 600; font-size: .76rem; letter-spacing: .12em;
+  color: var(--color-vulcan-black-light); text-transform: uppercase;
+}
+.card h4 { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; margin: .3rem 0 1rem; }
+.card .figures { display: flex; gap: 1.8rem; margin-bottom: 1rem; }
+.card .figures div .n { font-family: var(--font-display); font-weight: 700; font-size: 1.7rem; line-height: 1; }
+.card .figures div .l { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--color-vulcan-black-light); font-family: var(--font-display); font-weight: 500; }
+.card p { font-size: .92rem; color: var(--color-vulcan-black-light); }
+
+/* charts */
+.chart-block { margin-top: 2.6rem; }
+.chart-block + .chart-block { margin-top: 4rem; padding-top: 3rem; border-top: 1px dashed var(--color-vulcan-black-light); }
+.chart { width: 100%; min-height: 440px; }
+.chart-caption {
+  font-size: .88rem; color: var(--color-vulcan-black-light); max-width: var(--measure);
+  margin-top: .8rem; padding-left: 1rem; border-left: 2px solid var(--color-vulcan-yellow);
+}
+.chart-caption strong { color: var(--color-vulcan-black); font-family: var(--font-display); text-transform: uppercase; letter-spacing: .06em; font-size: .82rem; }
+
+/* quadrant table */
+table.quad { width: 100%; border-collapse: collapse; margin-top: 2.2rem; font-size: .95rem; }
+table.quad th {
+  font-family: var(--font-display); text-transform: uppercase; letter-spacing: .1em; font-size: .76rem;
+  text-align: left; padding: .7rem .9rem; border-bottom: 2px solid var(--color-vulcan-black);
+  color: var(--color-vulcan-black); font-weight: 600;
+}
+table.quad td { padding: .85rem .9rem; border-bottom: 1px solid rgba(26,26,26,.18); vertical-align: top; }
+table.quad td:first-child { font-family: var(--font-display); font-weight: 600; white-space: nowrap; }
+table.quad tr.hl td { background: rgba(255, 202, 58, .14); }
+.swatch { display: inline-block; width: .8em; height: .8em; border-radius: 50%; margin-right: .5em; vertical-align: -.06em; border: 1px solid var(--color-vulcan-black); }
+
+/* dataset */
+.files { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; margin-top: 2.2rem; }
+.file-card { border: 1px solid rgba(26,26,26,.2); padding: 1.4rem 1.5rem; text-decoration: none; transition: background .15s ease, border-color .15s ease; display: block; }
+.file-card:hover { background: rgba(255,202,58,.1); border-color: var(--color-vulcan-black); }
+.file-card .fname { font-family: var(--font-display); font-weight: 600; font-size: 1rem; word-break: break-all; }
+.file-card .fdesc { font-size: .88rem; color: var(--color-vulcan-black-light); margin-top: .4rem; }
+.caveats { margin-top: 2.6rem; border-left: 2px solid var(--color-vulcan-yellow); padding: .4rem 0 .4rem clamp(1rem, 3vw, 2rem); }
+.caveats h3 { margin-top: 0; }
+.caveats ul { margin: .6rem 0 0 1.2rem; max-width: var(--measure); }
+.caveats li + li { margin-top: .5rem; }
+
+/* full table */
+details.fulltable { margin-top: 2.4rem; border: 1px solid rgba(26,26,26,.2); }
+details.fulltable summary {
+  cursor: pointer; padding: 1rem 1.4rem; font-family: var(--font-display); font-weight: 600;
+  text-transform: uppercase; letter-spacing: .07em; font-size: .85rem; list-style: none;
+}
+details.fulltable summary::after { content: "+"; float: right; font-size: 1.3em; line-height: 1; }
+details.fulltable[open] summary::after { content: "–"; }
+details.fulltable summary:hover { background: rgba(255,202,58,.12); }
+.tablewrap { overflow-x: auto; border-top: 1px solid rgba(26,26,26,.2); }
+table.full { width: 100%; border-collapse: collapse; font-size: .85rem; }
+table.full th { position: sticky; top: 0; font-family: var(--font-display); text-transform: uppercase; letter-spacing: .08em; font-size: .72rem; text-align: left; padding: .55rem .8rem; background: var(--color-vulcan-white); border-bottom: 2px solid var(--color-vulcan-black); font-weight: 600; }
+table.full th.num, table.full td.num { text-align: right; }
+table.full td { padding: .45rem .8rem; border-bottom: 1px solid rgba(26,26,26,.12); }
+table.full td.tid { font-family: var(--font-display); font-weight: 600; white-space: nowrap; }
+
+/* citation */
+.cite-block { border-left: 2px solid var(--color-vulcan-yellow); padding: .2rem 0 .2rem clamp(1rem, 3vw, 2rem); margin-top: 1.6rem; max-width: 60rem; }
+.cite-block p { font-size: .92rem; max-width: none; }
+.cite-block + .cite-block { margin-top: 1.4rem; }
+.cite-label { font-family: var(--font-display); font-weight: 600; font-size: .76rem; letter-spacing: .12em; text-transform: uppercase; color: var(--color-vulcan-black-light); display: inline-block; margin-bottom: .5rem; }
+
+/* footer */
+footer {
+  border-top: 1px solid rgba(26,26,26,.15);
+  padding: 2.6rem var(--gutter); margin-top: 0;
+  font-family: var(--font-display);
+}
+footer .ft { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1.5rem; align-items: baseline; }
+footer .ft > span:first-child { font-size: .85rem; letter-spacing: .1em; }
+footer a { color: var(--color-vulcan-black); text-decoration-color: var(--color-vulcan-yellow-dark); text-decoration-thickness: 2px; }
+footer a:hover { background: var(--color-vulcan-yellow); text-decoration: none; }
+footer .small { font-size: .82rem; color: var(--color-vulcan-black-light); margin-top: 1.2rem; font-family: var(--font-body); max-width: 70ch; }
+
+/* reveal animation */
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
+.reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .btn, .file-card { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <a href="https://github.com/VulcanLab">VulcanLab</a>
+  <span class="tag">Preprint &amp; Open Dataset — June 2026</span>
+  <a href="https://github.com/VulcanLab/genai-security-incidents">GitHub ↗</a>
+</header>
+
+<div class="hero">
+  <span class="eyebrow">AIFT · Preprint · 8 June 2026</span>
+  <h1>Coverage Without Casualties<span class="q">?</span></h1>
+  <p class="subtitle">An empirical test of the AI insurability frontier against recent incident evidence</p>
+  <div class="byline">
+    <span class="authors">Alex Leung · Rex Zhang · Kentaroh Toyoda · SiewMei Loh</span>
+    <span class="meta">AIFT</span>
+  </div>
+  <p class="companion-note">Companion paper to <em>“The Insurability Frontier of AI Risk”</em> (AIFT, 6 May 2026).</p>
+  <div class="cta-row">
+    <a class="btn btn-primary" href="https://github.com/VulcanLab/genai-security-incidents/raw/main/incidents_2024-2026.csv">Download dataset (CSV)</a>
+    <a class="btn btn-ghost" href="https://github.com/VulcanLab/genai-security-incidents/raw/main/Incident_Data_2024-2026.xlsx">Workbook (XLSX)</a>
+    <a class="btn btn-ghost" href="#cite">Cite</a>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="n">3,054</div><div class="l">Real-world AI incidents, 2024–2026</div></div>
+  <div class="stat"><div class="n">55</div><div class="l">Threat classes in the insurability matrix</div></div>
+  <div class="stat"><div class="n">26</div><div class="l">Insurance products &amp; exclusion regimes</div></div>
+  <div class="stat"><div class="n">4,328</div><div class="l">Total records incl. demonstrations &amp; disclosures</div></div>
+</div>
+
+<section id="abstract">
+  <div class="sec-head reveal"><span class="sec-num">01</span><h2>Abstract</h2></div>
+  <div class="abstract reveal">
+    <p>As AI systems increasingly take on tasks whose failures cause real-world loss, understanding which AI threats and risks are insurable has become a central question for the firms that deploy them and the carriers that underwrite that exposure. Our prior work mapped 55 AI threat classes against 26 insurance products and exclusion regimes, but coded coverage from public carrier materials only and explicitly reported no claim-frequency or severity data. This companion paper supplies the missing empirical layer. We join the 55-threat catalog to 3,054 recent real-world AI incidents (2024–2026), mapped, where a threat predicate applies, to the 55 threat classes of the original insurability matrix via a documented, reproducible procedure.</p>
+    <p>We then ask a question the positioning matrix could not: does affirmative coverage track observed incident evidence? <mark>It does not.</mark> Affirmative coverage breadth bears little relation to how often a peril is recently observed, and the market's most decisive coverage choices run directly against incidence. Model drift, the headline peril of the oldest affirmative product, has zero real-world incidents in the corpus yet draws seven affirmative coverage cells, while deepfake fraud is the single most frequent recent peril yet draws only three affirmative cells, and shadow AI shows high incidence and severity with no affirmative cover and two exclusions. We organize threats into a coverage–incidence frontier with four quadrants (covered, exposure gap, anticipatory, latent) and use it to locate the market's sharpest mismatches. We stress that an incident corpus is not insured-loss experience; it grounds threat prevalence and severity, not claim frequency or loss cost.</p>
+    <p class="keywords"><strong>Keywords:</strong> AI insurance · insurability frontier · incident data · threat prevalence · silent-AI exposure · coverage gap · foundation model concentration · systemic risk</p>
+  </div>
+</section>
+
+<section id="findings">
+  <div class="sec-head reveal"><span class="sec-num">02</span><h2>Key findings</h2></div>
+  <p class="lede reveal">The market is <mark>not sorting on the perils that actually occur</mark>. It prices some perils well ahead of evidence while leaving frequently observed perils thinly covered or excluded. The clearest contrast in the corpus:</p>
+  <div class="contrast">
+    <div class="card reveal">
+      <span class="tid">T-29 · Anticipatory quadrant</span>
+      <h4>Model drift</h4>
+      <div class="figures">
+        <div><div class="n">0</div><div class="l">Real-world incidents</div></div>
+        <div><div class="n">7</div><div class="l">Affirmative coverage cells</div></div>
+      </div>
+      <p>The headline peril of the oldest affirmative product on the market (operating since 2018) — insured well ahead of, and largely independent of, observable incident evidence. Drift surfaces as silent performance decay that an incident corpus structurally cannot see.</p>
+    </div>
+    <div class="card flag reveal">
+      <span class="tid">T-37 · Exposure-gap quadrant</span>
+      <h4>Shadow AI</h4>
+      <div class="figures">
+        <div><div class="n">28</div><div class="l">Real-world incidents</div></div>
+        <div><div class="n">0</div><div class="l">Affirmative cells</div></div>
+        <div><div class="n">2</div><div class="l">Exclusions</div></div>
+      </div>
+      <p>The mirror image: 75% of its incidents are critical-or-high severity, yet the market sees this peril clearly and is mostly declining it — pushing it toward controls and governance rather than transfer.</p>
+    </div>
+    <div class="card flag reveal">
+      <span class="tid">T-35 · Exposure-gap quadrant</span>
+      <h4>Deepfake fraud</h4>
+      <div class="figures">
+        <div><div class="n">609</div><div class="l">Real-world incidents</div></div>
+        <div><div class="n">3</div><div class="l">Affirmative cells</div></div>
+      </div>
+      <p>The single most frequent recent AI peril — a misuse and fraud event, not a model-internal failure — yet it draws only three affirmative coverage cells.</p>
+    </div>
+  </div>
+</section>
+
+<section id="charts">
+  <div class="sec-head reveal"><span class="sec-num">03</span><h2>The evidence, interactively</h2></div>
+  <p class="reveal">All figures are computed live from the released dataset (<a href="https://github.com/VulcanLab/genai-security-incidents/blob/main/incidents_2024-2026.csv"><code>incidents_2024-2026.csv</code></a>) joined to the coverage matrix of the companion paper. Hover for per-threat detail.</p>
+
+  <div class="chart-block reveal">
+    <div id="chart-top18" class="chart"></div>
+    <p class="chart-caption"><strong>Fig. 1</strong> — Top-18 threats by recent (2024–26) real-world incidence, colored by coverage–incidence quadrant. Deepfake fraud (T-35) leads; shadow AI (T-37) stands out: high incidence, no affirmative cover, active exclusions.</p>
+  </div>
+
+  <div class="chart-block reveal">
+    <div id="chart-frontier" class="chart" style="min-height: 560px;"></div>
+    <p class="chart-caption"><strong>Fig. 2</strong> — The coverage–incidence frontier: observed real-world incidence (log scale) against affirmative coverage breadth, split at the medians (incidence = 5, affirmative cells = 5; a threat lying exactly at a median falls in the lower group). The lower-right is the exposure-gap zone: frequent but thinly covered. The upper-left is anticipatory cover: broadly covered but rarely observed.</p>
+  </div>
+
+  <div class="chart-block reveal">
+    <div id="chart-maturity" class="chart" style="min-height: 540px;"></div>
+    <p class="chart-caption"><strong>Fig. 3</strong> — Evidence maturity by threat (2024–2026): realized real-world incidents, research/red-team demonstrations, and disclosed attack surface, stacked. Streams are distinct evidence modalities and are not summed into a single frequency. Of the 55 threats, 42 are Realized, 3 Demonstrated, 2 Surfacing, and 8 Theoretical.</p>
+  </div>
+</section>
+
+<section id="frontier">
+  <div class="sec-head reveal"><span class="sec-num">04</span><h2>The coverage–incidence frontier</h2></div>
+  <p class="reveal">Splitting the 55 threats at the median incidence (5) and median affirmative-cell count (5) yields four quadrants. Position on one axis tells us little about position on the other.</p>
+  <table class="quad reveal">
+    <thead><tr><th>Quadrant</th><th>Reading</th><th>Representative threats</th></tr></thead>
+    <tbody>
+      <tr><td><span class="swatch" style="background: rgb(26,26,26)"></span>Q1 Covered</td><td>High incidence, broad affirmative cover</td><td>Sensitive info disclosure (T-03), hallucination (T-04), system-prompt exposure (T-06), evasion/KYC (T-25), regulatory non-compliance (T-39)</td></tr>
+      <tr class="hl"><td><span class="swatch" style="background: rgb(255,202,58)"></span>Q2 Exposure gap</td><td>High incidence, thin/no affirmative cover</td><td>Deepfake fraud (T-35), shadow AI (T-37), bias (T-30), cost-denial-of-service (T-08), MCP compromise (T-21), prompt injection (T-01)</td></tr>
+      <tr><td><span class="swatch" style="background: rgb(255,255,255)"></span>Q3 Anticipatory</td><td>Low incidence, broad affirmative cover</td><td>Model drift (T-29), model extraction (T-27), membership inference (T-28), RAG poisoning (T-07), IP infringement (T-10)</td></tr>
+      <tr><td><span class="swatch" style="background: rgb(77,77,77)"></span>Q4 Latent</td><td>Low incidence, thin cover</td><td>Foundation model concentration (T-45), lethal trifecta (T-40), agentic-skills cluster (T-46–T-55)</td></tr>
+    </tbody>
+  </table>
+
+  <details class="fulltable reveal">
+    <summary>Full empirical threat layer — all 55 threats</summary>
+    <div class="tablewrap">
+      <table class="full" id="full-table">
+        <thead><tr><th>Threat</th><th>Name</th><th class="num">Realized</th><th class="num">Demonstrated</th><th class="num">Surfacing</th><th class="num">Affirmative cells</th><th class="num">Exclusions</th><th>Quadrant</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </details>
+</section>
+
+<section id="dataset">
+  <div class="sec-head reveal"><span class="sec-num">05</span><h2>The dataset</h2></div>
+  <p class="reveal">Incident-level records underlying the paper: publicly disclosed GenAI / agentic-AI security incidents, vulnerabilities, and red-team findings, tagged against common AI-security taxonomies (OWASP LLM Top 10, OWASP ASI, MITRE ATLAS, NIST AI RMF) and crosswalked to the threat IDs of the <em>Insurability Frontier</em> companion paper. <strong>4,328 records · 2024–2026 · data cutoff 17 May 2026.</strong> A subset of <a href="https://doi.org/10.5281/zenodo.20248676">GenAI &amp; Agentic AI Security Incidents (Zenodo v2.0.0)</a>.</p>
+  <div class="files">
+    <a class="file-card reveal" href="https://github.com/VulcanLab/genai-security-incidents/raw/main/incidents_2024-2026.csv">
+      <div class="fname">incidents_2024-2026.csv</div>
+      <div class="fdesc">CLI-friendly export (UTF-8, RFC-4180 quoted). 20 columns incl. stream, severity, CVSS, taxonomy tags, and the T-01…T-55 threat crosswalk.</div>
+    </a>
+    <a class="file-card reveal" href="https://github.com/VulcanLab/genai-security-incidents/raw/main/Incident_Data_2024-2026.xlsx">
+      <div class="fname">Incident_Data_2024-2026.xlsx</div>
+      <div class="fdesc">Canonical workbook with an embedded Readme sheet plus the Incidents 2024–2026 data sheet.</div>
+    </a>
+    <a class="file-card reveal" href="https://github.com/VulcanLab/genai-security-incidents#data-dictionary">
+      <div class="fname">Data dictionary →</div>
+      <div class="fdesc">Column-by-column documentation, evidence-stream definitions, and quick-start snippets in the repository README.</div>
+    </a>
+  </div>
+  <div class="caveats reveal">
+    <h3>Read the numbers with care</h3>
+    <ul>
+      <li><strong>This is incident data, not insured-loss experience.</strong> Counts reflect documented public disclosures, not claims or losses; there is no exposure base and no loss-development triangle.</li>
+      <li><strong>Streams are distinct evidence types and are not summed.</strong> Realized, Demonstrated, and Surfacing measure different things.</li>
+      <li><strong>The threat mapping is heuristic.</strong> A record maps to a threat only when its documented predicate is satisfied; each per-threat count is a best-evidence estimate, not a census.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="cite">
+  <div class="sec-head reveal"><span class="sec-num">06</span><h2>Cite this work</h2></div>
+  <div class="cite-block reveal">
+    <span class="cite-label">Paper</span>
+    <p>A. Leung, R. Zhang, K. Toyoda, and S. Loh, “Coverage Without Casualties? An Empirical Test of the AI Insurability Frontier Against Recent Incident Evidence,” AIFT, June 8, 2026. Companion paper to “The Insurability Frontier of AI Risk” (AIFT, May 6, 2026).</p>
+  </div>
+  <div class="cite-block reveal">
+    <span class="cite-label">Dataset</span>
+    <p>E. Guilherme Jr., “GenAI &amp; Agentic AI Security Incidents,” version 2.0.0, dataset, Zenodo, 17 May 2026, doi:<a href="https://doi.org/10.5281/zenodo.20248676">10.5281/zenodo.20248676</a>. 2024–2026 threat-tagged subset released at <a href="https://github.com/VulcanLab/genai-security-incidents">github.com/VulcanLab/genai-security-incidents</a>.</p>
+  </div>
+  <p class="reveal" style="margin-top: 1.6rem;">Data released under <a href="https://creativecommons.org/licenses/by/4.0/">CC&nbsp;BY&nbsp;4.0</a>, matching the upstream Zenodo dataset.</p>
+</section>
+
+<footer>
+  <div class="ft">
+    <span style="font-weight: 600; text-transform: uppercase;">VulcanLab · AIFT</span>
+    <span><a href="https://github.com/VulcanLab/genai-security-incidents">Repository</a> · <a href="https://doi.org/10.5281/zenodo.20248676">Upstream dataset</a> · <a href="#abstract">Top</a></span>
+  </div>
+  <p class="small">This is a preprint. Coverage cells reflect a public-positioning snapshot as of 17 May 2026, not executed policy wording or claim outcomes. Incident counts ground threat prevalence and severity, not claim frequency or loss cost.</p>
+</footer>
+
+<script>
+const THREATS = [{"id":"T-01","name":"Prompt Injection","realized":116,"demonstrated":127,"surfacing":70,"affirmative":5,"silent":4,"excluded":3,"quadrant":"exposure gap"},{"id":"T-02","name":"Indirect Prompt Injection","realized":20,"demonstrated":29,"surfacing":15,"affirmative":5,"silent":3,"excluded":2,"quadrant":"exposure gap"},{"id":"T-03","name":"Sensitive Information Disclosure","realized":370,"demonstrated":38,"surfacing":74,"affirmative":8,"silent":1,"excluded":2,"quadrant":"covered"},{"id":"T-04","name":"Hallucination","realized":132,"demonstrated":1,"surfacing":0,"affirmative":8,"silent":5,"excluded":2,"quadrant":"covered"},{"id":"T-05","name":"Insecure Output Handling","realized":596,"demonstrated":5,"surfacing":347,"affirmative":4,"silent":1,"excluded":2,"quadrant":"exposure gap"},{"id":"T-06","name":"System Prompt / Hidden Context Exposure","realized":347,"demonstrated":16,"surfacing":3,"affirmative":6,"silent":2,"excluded":2,"quadrant":"covered"},{"id":"T-07","name":"Vector / RAG Poisoning","realized":3,"demonstrated":11,"surfacing":2,"affirmative":6,"silent":2,"excluded":2,"quadrant":"anticipatory"},{"id":"T-08","name":"Cost Denial-of-Service","realized":13,"demonstrated":6,"surfacing":24,"affirmative":0,"silent":4,"excluded":0,"quadrant":"exposure gap"},{"id":"T-09","name":"Jailbreak / Safety Bypass","realized":21,"demonstrated":44,"surfacing":4,"affirmative":6,"silent":2,"excluded":2,"quadrant":"covered"},{"id":"T-10","name":"IP Infringement","realized":2,"demonstrated":0,"surfacing":0,"affirmative":9,"silent":2,"excluded":2,"quadrant":"anticipatory"},{"id":"T-11","name":"Goal Hijacking","realized":4,"demonstrated":2,"surfacing":0,"affirmative":7,"silent":1,"excluded":2,"quadrant":"anticipatory"},{"id":"T-12","name":"Tool Misuse / Excessive Agency","realized":28,"demonstrated":15,"surfacing":2,"affirmative":7,"silent":1,"excluded":2,"quadrant":"covered"},{"id":"T-13","name":"Identity and Privilege Abuse","realized":6,"demonstrated":1,"surfacing":36,"affirmative":5,"silent":1,"excluded":2,"quadrant":"exposure gap"},{"id":"T-14","name":"Supply Chain Compromise","realized":40,"demonstrated":14,"surfacing":77,"affirmative":4,"silent":1,"excluded":2,"quadrant":"exposure gap"},{"id":"T-15","name":"Unexpected Code Execution","realized":579,"demonstrated":9,"surfacing":157,"affirmative":5,"silent":1,"excluded":2,"quadrant":"exposure gap"},{"id":"T-16","name":"Memory / State Poisoning","realized":3,"demonstrated":6,"surfacing":1,"affirmative":6,"silent":1,"excluded":2,"quadrant":"anticipatory"},{"id":"T-17","name":"Insecure Inter-Agent Communication","realized":2,"demonstrated":4,"surfacing":0,"affirmative":5,"silent":1,"excluded":2,"quadrant":"latent"},{"id":"T-18","name":"Cascading Failure","realized":5,"demonstrated":2,"surfacing":0,"affirmative":7,"silent":1,"excluded":2,"quadrant":"anticipatory"},{"id":"T-19","name":"Trust Exploitation","realized":1,"demonstrated":1,"surfacing":0,"affirmative":7,"silent":2,"excluded":2,"quadrant":"anticipatory"},{"id":"T-20","name":"Rogue Agents","realized":0,"demonstrated":1,"surfacing":1,"affirmative":5,"silent":2,"excluded":3,"quadrant":"latent"},{"id":"T-21","name":"MCP Server Compromise","realized":18,"demonstrated":4,"surfacing":123,"affirmative":2,"silent":5,"excluded":1,"quadrant":"exposure gap"},{"id":"T-22","name":"Unauthorized MCP Server Exposure","realized":5,"demonstrated":0,"surfacing":47,"affirmative":3,"silent":3,"excluded":2,"quadrant":"latent"},{"id":"T-23","name":"MCP Context Manipulation","realized":4,"demonstrated":3,"surfacing":0,"affirmative":2,"silent":3,"excluded":1,"quadrant":"latent"},{"id":"T-24","name":"OAuth / Token Cascade","realized":6,"demonstrated":2,"surfacing":15,"affirmative":5,"silent":3,"excluded":2,"quadrant":"exposure gap"},{"id":"T-25","name":"Model Evasion / KYC Bypass","realized":25,"demonstrated":26,"surfacing":0,"affirmative":9,"silent":3,"excluded":2,"quadrant":"covered"},{"id":"T-26","name":"Data Poisoning","realized":19,"demonstrated":22,"surfacing":4,"affirmative":8,"silent":2,"excluded":1,"quadrant":"covered"},{"id":"T-27","name":"Model Extraction","realized":1,"demonstrated":2,"surfacing":0,"affirmative":6,"silent":0,"excluded":2,"quadrant":"anticipatory"},{"id":"T-28","name":"Model Inversion / Membership Inference","realized":0,"demonstrated":3,"surfacing":0,"affirmative":6,"silent":1,"excluded":2,"quadrant":"anticipatory"},{"id":"T-29","name":"Model Drift","realized":0,"demonstrated":0,"surfacing":1,"affirmative":7,"silent":2,"excluded":3,"quadrant":"anticipatory"},{"id":"T-30","name":"Bias and Fairness Failures","realized":107,"demonstrated":6,"surfacing":0,"affirmative":5,"silent":4,"excluded":3,"quadrant":"exposure gap"},{"id":"T-31","name":"Compromised Foundation Model","realized":0,"demonstrated":0,"surfacing":0,"affirmative":4,"silent":2,"excluded":2,"quadrant":"latent"},{"id":"T-32","name":"Insecure AI Infrastructure","realized":6,"demonstrated":0,"surfacing":6,"affirmative":3,"silent":1,"excluded":2,"quadrant":"exposure gap"},{"id":"T-33","name":"Lack of AI Bill of Materials (No AI-BOM)","realized":2,"demonstrated":1,"surfacing":0,"affirmative":0,"silent":2,"excluded":0,"quadrant":"latent"},{"id":"T-34","name":"Insecure AI-Generated Code","realized":8,"demonstrated":0,"surfacing":1,"affirmative":5,"silent":3,"excluded":1,"quadrant":"exposure gap"},{"id":"T-35","name":"Deepfake Fraud","realized":609,"demonstrated":2,"surfacing":1,"affirmative":3,"silent":2,"excluded":1,"quadrant":"exposure gap"},{"id":"T-36","name":"AI-Enhanced Phishing","realized":53,"demonstrated":2,"surfacing":8,"affirmative":2,"silent":2,"excluded":1,"quadrant":"exposure gap"},{"id":"T-37","name":"Shadow AI","realized":28,"demonstrated":2,"surfacing":2,"affirmative":0,"silent":2,"excluded":2,"quadrant":"exposure gap"},{"id":"T-38","name":"AI Offensive Operations","realized":36,"demonstrated":2,"surfacing":0,"affirmative":3,"silent":0,"excluded":0,"quadrant":"exposure gap"},{"id":"T-39","name":"Regulatory Non-Compliance","realized":424,"demonstrated":0,"surfacing":13,"affirmative":7,"silent":0,"excluded":3,"quadrant":"covered"},{"id":"T-40","name":"Lethal Trifecta","realized":2,"demonstrated":0,"surfacing":0,"affirmative":0,"silent":11,"excluded":0,"quadrant":"latent"},{"id":"T-41","name":"Browser-Agent Hijacking","realized":5,"demonstrated":10,"surfacing":14,"affirmative":5,"silent":1,"excluded":2,"quadrant":"latent"},{"id":"T-42","name":"Tool Description Injection","realized":0,"demonstrated":2,"surfacing":0,"affirmative":3,"silent":3,"excluded":1,"quadrant":"latent"},{"id":"T-43","name":"AI-Washing","realized":5,"demonstrated":0,"surfacing":0,"affirmative":0,"silent":1,"excluded":2,"quadrant":"latent"},{"id":"T-44","name":"AI Worms","realized":2,"demonstrated":2,"surfacing":0,"affirmative":5,"silent":1,"excluded":2,"quadrant":"latent"},{"id":"T-45","name":"Foundation Model Concentration","realized":0,"demonstrated":0,"surfacing":0,"affirmative":0,"silent":4,"excluded":0,"quadrant":"latent"},{"id":"T-46","name":"Malicious AI Skills / Plugins","realized":4,"demonstrated":2,"surfacing":0,"affirmative":5,"silent":3,"excluded":1,"quadrant":"latent"},{"id":"T-47","name":"Skill Supply Chain Compromise","realized":0,"demonstrated":0,"surfacing":0,"affirmative":5,"silent":3,"excluded":1,"quadrant":"latent"},{"id":"T-48","name":"Over-Privileged AI Skills","realized":0,"demonstrated":0,"surfacing":0,"affirmative":4,"silent":4,"excluded":1,"quadrant":"latent"},{"id":"T-49","name":"Insecure Skill Metadata","realized":0,"demonstrated":0,"surfacing":0,"affirmative":3,"silent":3,"excluded":1,"quadrant":"latent"},{"id":"T-50","name":"Unsafe Skill Deserialization","realized":1,"demonstrated":1,"surfacing":0,"affirmative":4,"silent":3,"excluded":1,"quadrant":"latent"},{"id":"T-51","name":"Weak Skill Isolation","realized":0,"demonstrated":0,"surfacing":1,"affirmative":4,"silent":2,"excluded":2,"quadrant":"latent"},{"id":"T-52","name":"Skill Update Drift","realized":0,"demonstrated":0,"surfacing":0,"affirmative":4,"silent":2,"excluded":2,"quadrant":"latent"},{"id":"T-53","name":"Poor Skill Scanning","realized":0,"demonstrated":0,"surfacing":0,"affirmative":0,"silent":3,"excluded":0,"quadrant":"latent"},{"id":"T-54","name":"Lack of Skill Governance","realized":1,"demonstrated":1,"surfacing":0,"affirmative":3,"silent":3,"excluded":2,"quadrant":"latent"},{"id":"T-55","name":"Cross Platform Skill Exploitation","realized":0,"demonstrated":0,"surfacing":0,"affirmative":3,"silent":2,"excluded":2,"quadrant":"latent"}];
+
+const C = {
+  yellow: 'rgb(255,202,58)',
+  yellowLight: 'rgb(255,221,47)',
+  yellowDark: 'rgb(255,170,43)',
+  black: 'rgb(26,26,26)',
+  blackLight: 'rgb(77,77,77)',
+  white: 'rgb(255,255,255)'
+};
+const QUAD_COLOR = {
+  'covered': C.black,
+  'exposure gap': C.yellow,
+  'anticipatory': C.white,
+  'latent': C.blackLight
+};
+const QUAD_LABEL = {
+  'covered': 'Q1 Covered',
+  'exposure gap': 'Q2 Exposure gap',
+  'anticipatory': 'Q3 Anticipatory',
+  'latent': 'Q4 Latent'
+};
+const FONT = { family: "'Roboto Condensed', 'Inter', sans-serif", color: C.black };
+const BASE_LAYOUT = {
+  paper_bgcolor: C.white,
+  plot_bgcolor: C.white,
+  font: { ...FONT, size: 13 },
+  margin: { l: 70, r: 30, t: 50, b: 60 },
+  hoverlabel: { bgcolor: C.black, bordercolor: C.black, font: { ...FONT, color: C.white, size: 13 } }
+};
+const CONFIG = { responsive: true, displayModeBar: false };
+
+function hover(t) {
+  return `<b>${t.id} ${t.name}</b><br>` +
+    `Realized incidents: ${t.realized}<br>` +
+    `Demonstrations: ${t.demonstrated} · Disclosures: ${t.surfacing}<br>` +
+    `Affirmative cells: ${t.affirmative} · Exclusions: ${t.excluded}<br>` +
+    `${QUAD_LABEL[t.quadrant]}<extra></extra>`;
+}
+
+/* ---- Fig 1: top-18 by realized incidence ---- */
+(function () {
+  const top = [...THREATS].sort((a, b) => b.realized - a.realized).slice(0, 18).reverse();
+  const quads = ['exposure gap', 'covered', 'anticipatory', 'latent'];
+  const traces = quads.map(q => {
+    const ts = top.filter(t => t.quadrant === q);
+    return {
+      type: 'bar', orientation: 'h', name: QUAD_LABEL[q],
+      y: ts.map(t => `${t.id} ${t.name}`),
+      x: ts.map(t => t.realized),
+      marker: { color: QUAD_COLOR[q], line: { color: C.black, width: 0.5 } },
+      hovertemplate: ts.map(hover)
+    };
+  }).filter(tr => tr.x.length);
+  Plotly.newPlot('chart-top18', traces, {
+    ...BASE_LAYOUT,
+    title: { text: '<b>TOP-18 THREATS BY REAL-WORLD INCIDENCE, 2024–2026</b>', font: { ...FONT, size: 13 }, x: 0 },
+    barmode: 'overlay',
+    yaxis: { categoryorder: 'array', categoryarray: top.map(t => `${t.id} ${t.name}`), tickfont: { size: 12 }, automargin: true },
+    xaxis: { title: { text: 'Realized incidents' }, gridcolor: 'rgba(26,26,26,.12)', zerolinecolor: C.black },
+    legend: { orientation: 'h', y: -0.12, x: 0 },
+    height: 560
+  }, CONFIG);
+})();
+
+/* ---- Fig 2: coverage–incidence frontier ---- */
+(function () {
+  const X_MED = 5, Y_MED = 5; // median split; exactly-at-median falls in the lower group
+  const lx = v => Math.log10(v + 1);
+  const xSplit = lx(X_MED) + (lx(X_MED + 1) - lx(X_MED)) / 2; // between 5 and 6
+  const ySplit = Y_MED + 0.5;
+  const xMax = lx(700), yMax = 12;
+
+  // deterministic jitter so coincident points (many zeros) stay distinguishable
+  const seen = {};
+  const pts = THREATS.map(t => {
+    const key = `${t.realized}|${t.affirmative}`;
+    const k = (seen[key] = (seen[key] || 0) + 1) - 1;
+    const jx = ((k % 3) - 1) * 0.022, jy = (Math.floor(k / 3) - 1) * 0.16;
+    return { ...t, px: lx(t.realized) + jx, py: t.affirmative + jy };
+  });
+
+  const quads = ['covered', 'exposure gap', 'anticipatory', 'latent'];
+  const traces = quads.map(q => {
+    const ts = pts.filter(t => t.quadrant === q);
+    return {
+      type: 'scatter', mode: 'markers', name: QUAD_LABEL[q],
+      x: ts.map(t => t.px), y: ts.map(t => t.py),
+      marker: { color: QUAD_COLOR[q], size: 11, opacity: .9, line: { color: C.black, width: 1.2 } },
+      hovertemplate: ts.map(hover)
+    };
+  });
+  // label the diagnostic threats
+  const callouts = ['T-35', 'T-37', 'T-29', 'T-04', 'T-01'].map(id => {
+    const t = pts.find(p => p.id === id);
+    return {
+      x: t.px, y: t.py, text: `<b>${t.id}</b>`, showarrow: true, arrowhead: 0, arrowcolor: C.blackLight,
+      ax: 0, ay: -22, font: { ...FONT, size: 12 }
+    };
+  });
+  const tickVals = [0, 1, 3, 5, 10, 30, 100, 300, 600];
+  Plotly.newPlot('chart-frontier', traces, {
+    ...BASE_LAYOUT,
+    title: { text: '<b>THE COVERAGE–INCIDENCE FRONTIER</b>', font: { ...FONT, size: 13 }, x: 0 },
+    xaxis: {
+      title: { text: 'Real-world incidents 2024–2026 (log scale)' },
+      tickvals: tickVals.map(lx), ticktext: tickVals.map(String),
+      range: [-0.06, xMax], gridcolor: 'rgba(26,26,26,.12)', zeroline: false
+    },
+    yaxis: {
+      title: { text: 'Affirmative coverage cells (of 26 products)' },
+      range: [-0.7, yMax], dtick: 2, gridcolor: 'rgba(26,26,26,.12)', zeroline: false
+    },
+    shapes: [
+      { type: 'rect', x0: xSplit, x1: xMax, y0: -0.7, y1: ySplit, fillcolor: 'rgba(255,202,58,.16)', line: { width: 0 }, layer: 'below' },
+      { type: 'line', x0: xSplit, x1: xSplit, y0: -0.7, y1: yMax, line: { color: C.black, width: 1.5, dash: 'dash' } },
+      { type: 'line', x0: -0.06, x1: xMax, y0: ySplit, y1: ySplit, line: { color: C.black, width: 1.5, dash: 'dash' } }
+    ],
+    annotations: [
+      { x: xMax - 0.05, y: yMax - 0.4, text: 'Q1 COVERED', xanchor: 'right', showarrow: false, font: { ...FONT, size: 12, color: C.blackLight } },
+      { x: xMax - 0.05, y: -0.35, text: 'Q2 EXPOSURE GAP', xanchor: 'right', showarrow: false, font: { ...FONT, size: 12, color: C.blackLight } },
+      { x: 0, y: yMax - 0.4, text: 'Q3 ANTICIPATORY', xanchor: 'left', showarrow: false, font: { ...FONT, size: 12, color: C.blackLight } },
+      { x: 0, y: -0.35, text: 'Q4 LATENT', xanchor: 'left', showarrow: false, font: { ...FONT, size: 12, color: C.blackLight } },
+      ...callouts
+    ],
+    legend: { orientation: 'h', y: -0.16, x: 0 },
+    height: 620
+  }, CONFIG);
+})();
+
+/* ---- Fig 3: evidence maturity, stacked ---- */
+(function () {
+  const top = [...THREATS]
+    .sort((a, b) => (b.realized + b.demonstrated + b.surfacing) - (a.realized + a.demonstrated + a.surfacing))
+    .slice(0, 20).reverse();
+  const labels = top.map(t => `${t.id} ${t.name}`);
+  const mk = (key, name, color) => ({
+    type: 'bar', orientation: 'h', name,
+    y: labels, x: top.map(t => t[key]),
+    marker: { color, line: { color: C.black, width: 0.5 } },
+    hovertemplate: top.map(t => `<b>${t.id} ${t.name}</b><br>${name}: ${t[key]}<extra></extra>`)
+  });
+  Plotly.newPlot('chart-maturity', [
+    mk('realized', 'Realized (real-world incidents)', C.black),
+    mk('demonstrated', 'Demonstrated (research / red-team)', C.yellowDark),
+    mk('surfacing', 'Surfacing (vulnerability disclosures)', C.yellow)
+  ], {
+    ...BASE_LAYOUT,
+    title: { text: '<b>EVIDENCE MATURITY BY THREAT — TOP 20 BY TOTAL RECORDS</b>', font: { ...FONT, size: 13 }, x: 0 },
+    barmode: 'stack',
+    xaxis: { title: { text: 'Records, 2024–2026 (streams stacked for composition, not summed as frequency)' }, gridcolor: 'rgba(26,26,26,.12)' },
+    yaxis: { tickfont: { size: 12 }, automargin: true },
+    legend: { orientation: 'h', y: -0.12, x: 0 },
+    height: 600
+  }, CONFIG);
+})();
+
+/* ---- full table ---- */
+(function () {
+  const tbody = document.querySelector('#full-table tbody');
+  const fmt = n => n.toLocaleString('en-US');
+  [...THREATS].sort((a, b) => b.realized - a.realized).forEach(t => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="tid">${t.id}</td><td>${t.name}</td>` +
+      `<td class="num">${fmt(t.realized)}</td><td class="num">${fmt(t.demonstrated)}</td>` +
+      `<td class="num">${fmt(t.surfacing)}</td><td class="num">${fmt(t.affirmative)}</td>` +
+      `<td class="num">${fmt(t.excluded)}</td><td>${QUAD_LABEL[t.quadrant]}</td>`;
+    tbody.appendChild(tr);
+  });
+})();
+
+/* ---- scroll reveal ---- */
+(function () {
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+})();
+</script>
+</body>
+</html>
