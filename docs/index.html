@@ -537,19 +537,22 @@ function hover(t) {
 
 /* ---- Fig 2: coverage–incidence frontier ---- */
 (function () {
-  const X_MED = 5, Y_MED = 5; // median split; exactly-at-median falls in the lower group
-  const lx = v => Math.log10(v + 1);
-  const xSplit = lx(X_MED) + (lx(X_MED + 1) - lx(X_MED)) / 2; // between 5 and 6
-  const ySplit = Y_MED + 0.5;
-  const xMax = lx(700), yMax = 12;
+  // Median splits as in the paper: incidence 5 (plotted as count + 1 = 6), affirmative cells 5.
+  // A threat lying exactly at a median falls in the lower group.
+  const X_MED = 6, Y_MED = 5;
+  const L = Math.log10;
+  const xMinL = -0.12, xMaxL = 2.9; // log axis range, in log10 units
+  const yMax = 12;
 
-  // deterministic jitter so coincident points (many zeros) stay distinguishable
+  // deterministic jitter so coincident points (many zeros) stay distinguishable;
+  // the first point at each position stays exact so on-median points sit on the lines
+  const off = n => n === 0 ? 0 : (n % 2 ? (n + 1) / 2 : -n / 2); // 0, +1, -1, +2, -2…
   const seen = {};
   const pts = THREATS.map(t => {
     const key = `${t.realized}|${t.affirmative}`;
     const k = (seen[key] = (seen[key] || 0) + 1) - 1;
-    const jx = ((k % 3) - 1) * 0.022, jy = (Math.floor(k / 3) - 1) * 0.16;
-    return { ...t, px: lx(t.realized) + jx, py: t.affirmative + jy };
+    const jx = off(k % 3) * 0.022, jy = off(Math.floor(k / 3)) * 0.16;
+    return { ...t, px: (t.realized + 1) * Math.pow(10, jx), py: t.affirmative + jy };
   });
 
   const quads = ['covered', 'exposure gap', 'anticipatory', 'latent'];
@@ -562,37 +565,38 @@ function hover(t) {
       hovertemplate: ts.map(hover)
     };
   });
-  // label the diagnostic threats
+  // label the diagnostic threats (shape/annotation x on a log axis is given in log10 units)
   const callouts = ['T-35', 'T-37', 'T-29', 'T-04', 'T-01'].map(id => {
     const t = pts.find(p => p.id === id);
     return {
-      x: t.px, y: t.py, text: `<b>${t.id}</b>`, showarrow: true, arrowhead: 0, arrowcolor: C.blackLight,
+      x: L(t.px), y: t.py, text: `<b>${t.id}</b>`, showarrow: true, arrowhead: 0, arrowcolor: C.blackLight,
       ax: 0, ay: -22, font: { ...FONT, size: 12 }
     };
   });
-  const tickVals = [0, 1, 3, 5, 10, 30, 100, 300, 600];
   Plotly.newPlot('chart-frontier', traces, {
     ...BASE_LAYOUT,
     title: { text: '<b>THE COVERAGE–INCIDENCE FRONTIER</b>', font: { ...FONT, size: 13 }, x: 0 },
     xaxis: {
-      title: { text: 'Real-world incidents 2024–2026 (log scale)' },
-      tickvals: tickVals.map(lx), ticktext: tickVals.map(String),
-      range: [-0.06, xMax], gridcolor: 'rgba(26,26,26,.12)', zeroline: false
+      title: { text: 'Real-world incident count + 1, 2024–2026 (log scale)' },
+      type: 'log', range: [xMinL, xMaxL],
+      tickvals: [1, 10, 100], ticktext: ['10<sup>0</sup>', '10<sup>1</sup>', '10<sup>2</sup>'],
+      gridcolor: 'rgba(26,26,26,.12)', zeroline: false
     },
     yaxis: {
       title: { text: 'Affirmative coverage cells (of 26 products)' },
       range: [-0.7, yMax], dtick: 2, gridcolor: 'rgba(26,26,26,.12)', zeroline: false
     },
+    // Shapes take raw data coordinates on a log axis (unlike annotations, which take log10 units)
     shapes: [
-      { type: 'rect', x0: xSplit, x1: xMax, y0: -0.7, y1: ySplit, fillcolor: 'rgba(255,202,58,.16)', line: { width: 0 }, layer: 'below' },
-      { type: 'line', x0: xSplit, x1: xSplit, y0: -0.7, y1: yMax, line: { color: C.black, width: 1.5, dash: 'dash' } },
-      { type: 'line', x0: -0.06, x1: xMax, y0: ySplit, y1: ySplit, line: { color: C.black, width: 1.5, dash: 'dash' } }
+      { type: 'rect', x0: X_MED, x1: Math.pow(10, xMaxL), y0: -0.7, y1: Y_MED, fillcolor: 'rgba(255,202,58,.16)', line: { width: 0 }, layer: 'below' },
+      { type: 'line', x0: X_MED, x1: X_MED, y0: -0.7, y1: yMax, line: { color: C.blackLight, width: 1, dash: '4px,3px' } },
+      { type: 'line', x0: Math.pow(10, xMinL), x1: Math.pow(10, xMaxL), y0: Y_MED, y1: Y_MED, line: { color: C.blackLight, width: 1, dash: '4px,3px' } }
     ],
     annotations: [
-      { x: xMax - 0.05, y: yMax - 0.4, text: 'Q1 COVERED', xanchor: 'right', showarrow: false, font: { ...FONT, size: 12, color: C.blackLight } },
-      { x: xMax - 0.05, y: -0.35, text: 'Q2 EXPOSURE GAP', xanchor: 'right', showarrow: false, font: { ...FONT, size: 12, color: C.blackLight } },
-      { x: 0, y: yMax - 0.4, text: 'Q3 ANTICIPATORY', xanchor: 'left', showarrow: false, font: { ...FONT, size: 12, color: C.blackLight } },
-      { x: 0, y: -0.35, text: 'Q4 LATENT', xanchor: 'left', showarrow: false, font: { ...FONT, size: 12, color: C.blackLight } },
+      { x: xMaxL - 0.05, y: yMax - 0.4, text: 'Q1 COVERED', xanchor: 'right', showarrow: false, font: { ...FONT, size: 12, color: C.blackLight } },
+      { x: xMaxL - 0.05, y: -0.35, text: 'Q2 EXPOSURE GAP', xanchor: 'right', showarrow: false, font: { ...FONT, size: 12, color: C.blackLight } },
+      { x: xMinL + 0.05, y: yMax - 0.4, text: 'Q3 ANTICIPATORY', xanchor: 'left', showarrow: false, font: { ...FONT, size: 12, color: C.blackLight } },
+      { x: xMinL + 0.05, y: -0.35, text: 'Q4 LATENT', xanchor: 'left', showarrow: false, font: { ...FONT, size: 12, color: C.blackLight } },
       ...callouts
     ],
     legend: { orientation: 'h', y: -0.16, x: 0 },
